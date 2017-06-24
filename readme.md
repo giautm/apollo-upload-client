@@ -1,4 +1,4 @@
-# ![Apollo upload client](https://cdn.rawgit.com/jaydenseric/apollo-upload-client/v4.1.0/apollo-upload-logo.svg)
+# ![Apollo upload client](https://cdn.rawgit.com/jaydenseric/apollo-upload-client/v5.0.0-alpha.1/apollo-upload-logo.svg)
 
 ![NPM version](https://img.shields.io/npm/v/apollo-upload-client.svg?style=flat-square) ![Github issues](https://img.shields.io/github/issues/jaydenseric/apollo-upload-client.svg?style=flat-square) ![Github stars](https://img.shields.io/github/stars/jaydenseric/apollo-upload-client.svg?style=flat-square)
 
@@ -13,12 +13,6 @@ Install with [npm](https://npmjs.com):
 
 ```
 npm install apollo-upload-client
-```
-
-React Native installs packages without their dev dependencies and [unconventionally](https://github.com/facebook/react-native/issues/10966) Babel is run over `node_modules`. Babel errors when it tries to respect config found in this package with presets and plugins absent. To overcome this install these dev dependencies (at versions matching `package.json`):
-
-```
-npm install --save-dev babel-preset-env babel-preset-stage-0 babel-plugin-transform-runtime
 ```
 
 Setup Apollo client with a special network interface:
@@ -38,10 +32,10 @@ Alternatively enable [query batching](http://dev.apollodata.com/core/network.htm
 
 ```js
 import ApolloClient from 'apollo-client'
-import { createBatchNetworkInterface } from 'apollo-upload-client'
+import { createBatchingNetworkInterface } from 'apollo-upload-client'
 
 const client = new ApolloClient({
-  networkInterface: createBatchNetworkInterface({
+  networkInterface: createBatchingNetworkInterface({
     uri: '/graphql',
     batchInterval: 10
   })
@@ -52,11 +46,9 @@ Also setup [Apollo upload server](https://github.com/jaydenseric/apollo-upload-s
 
 ## Usage
 
-Once setup, you will be able to use [`File`](https://developer.mozilla.org/en/docs/Web/API/File) objects, [`FileList`](https://developer.mozilla.org/en/docs/Web/API/FileList) objects, or `File` arrays within query or mutation input variables.
+Once setup, you will be able to use [`File`](https://developer.mozilla.org/en/docs/Web/API/File) and [`FileList`](https://developer.mozilla.org/en/docs/Web/API/FileList) objects, `File` arrays, and `ReactNativeFile` instances within query or mutation input variables.
 
-For React Native, any object with the properties `name`, `type` and `uri` within variables will be treated as a file.
-
-The files upload to a temp directory; the paths and metadata will be available under the variable name in the resolver. See the [server usage](https://github.com/jaydenseric/apollo-upload-server#usage).
+With [`apollo-upload-server`](https://github.com/jaydenseric/apollo-upload-server) setup, the files upload to a temp directory. The paths and metadata will be available under the variable name in the resolver. See the [server usage](https://github.com/jaydenseric/apollo-upload-server#usage).
 
 ### Single file
 
@@ -131,6 +123,36 @@ export default graphql(gql`
     />
   )
 })
+```
+
+### React Native
+
+React Native [polyfills FormData](https://github.com/facebook/react-native/blob/v0.45.1/Libraries/Network/FormData.js) under the hood and objects with the properties `uri`, `type` and `name` substitute `window.File`. Assuming all objects with those properties in variables are files would be risky. Use `ReactNativeFile` instances in query or mutation variables to mark files for upload:
+
+```js
+import { ReactNativeFile } from 'apollo-upload-client'
+
+// ✂
+
+// Single file
+const file = new ReactNativeFile({
+  uri: uriFromCameraRoll,
+  type: 'image/jpeg',
+  name: 'photo.jpg'
+})
+
+// Multiple files
+const files = ReactNativeFile.list({
+  uri: uriFromCameraRoll1,
+  type: 'image/jpeg',
+  name: 'photo-1.jpg'
+}, {
+  uri: uriFromCameraRoll2,
+  type: 'image/jpeg',
+  name: 'photo-2.jpg'
+})
+
+// ✂
 ```
 
 ## Inspiration
